@@ -35,9 +35,6 @@ class StatusResponse extends AbstractResponse
         }
 
         $payment = $this->getMostRecentPayment();
-        if (is_array($this->data->statusSuccess->report->payment)) {
-            $payment = $payment[0];
-        }
 
         $authorizationStatus = $payment->authorization->status;
         if ($authorizationStatus === 'CANCELED') {
