@@ -10,40 +10,19 @@ use Omnipay\Common\Message\RedirectResponseInterface;
  */
 class StatusResponse extends AbstractResponse
 {
-    
-    //get the payment id(s) to be captured
+
     public function getTransactionReference(){
-        return $this->data->statusSuccess->report->payment->id;
+        return $this->request->getTransactionReference();
     }
-    
+
     public function isSuccessful()
     {
         if(isset($this->data->statusSuccess) && $this->data->statusSuccess->success->code === 'SUCCESS'){
-            if(!isset($this->data->statusSuccess->report->payment)){
-                return false;
-            }
-            elseif(is_array($this->data->statusSuccess->report->payment)) {
-                foreach($this->data->statusSuccess->report->payment as $payment){
-                    
-                    if($payment->paymentMethod == 'BANK_TRANSFER' && $payment->authorization->status == 'AUTHORIZED') {
-                        if($this->data->statusSuccess->report->approximateTotals->totalRegistered == $this->data->statusSuccess->report->approximateTotals->totalCaptured) return true;
-                        return false;
-                    }
-                    elseif($payment->paymentMethod != 'BANK_TRANSFER' && $payment->authorization->status == 'AUTHORIZED') return true;
-                }
-            }
-            else{
-                $payment = $this->data->statusSuccess->report->payment;
-                if($payment->paymentMethod == 'BANK_TRANSFER' && $payment->authorization->status == 'AUTHORIZED'){
-                    if($this->data->statusSuccess->report->approximateTotals->totalRegistered == $this->data->statusSuccess->report->approximateTotals->totalCaptured) return true;
-                    return false;
-                }
-                elseif($payment->paymentMethod != 'BANK_TRANSFER' && $payment->authorization->status == 'AUTHORIZED') return true;
-            }
+            return $this->isCaptured();
         }
         return false;
     }
-    
+
     /**
      * Is the response successful?
      *
@@ -54,29 +33,31 @@ class StatusResponse extends AbstractResponse
         if(!isset($this->data->statusSuccess->report->payment)){
             return true;
         }
-        elseif(is_array($this->data->statusSuccess->report->payment)) {
-            foreach($this->data->statusSuccess->report->payment as $payment){
-                if($payment->authorization->status == 'CANCELED') continue;
-                if($payment->paymentMethod == 'BANK_TRANSFER'){
-                    if($payment->authorization->status == 'AUTHORIZED') {
-                        if($this->data->statusSuccess->report->approximateTotals->totalRegistered == $this->data->statusSuccess->report->approximateTotals->totalCaptured) return false;
-                        return true;
-                    }
-                }
-            }
+
+        $payment = $this->getMostRecentPayment();
+        if (is_array($this->data->statusSuccess->report->payment)) {
+            $payment = $payment[0];
         }
-        else{
-            $payment = $this->data->statusSuccess->report->payment;
-            if($payment->authorization->status == 'CANCELED') return false;
-            if($payment->paymentMethod == 'BANK_TRANSFER'){
-                if($payment->authorization->status == 'AUTHORIZED'){
-                    if($this->data->statusSuccess->report->approximateTotals->totalRegistered == $this->data->statusSuccess->report->approximateTotals->totalCaptured) return false;
+
+        $authorizationStatus = $payment->authorization->status;
+        if ($authorizationStatus === 'CANCELED') {
+            return false;
+        }
+
+        //TODO This is probably right, but different from the original implementation
+        if ($authorizationStatus === 'AUTHORIZED') {
+            if ($payment->paymentMethod === 'BANK_TRANSFER') {
+                if ($this->isCaptured() === false) {
                     return true;
                 }
             }
+
+            return false;
         }
+
+        return true;
     }
-    
+
     /**
      * Is the transaction cancelled by the user?
      *
@@ -84,38 +65,47 @@ class StatusResponse extends AbstractResponse
      */
     public function isCancelled()
     {
-        $canceled = false;
-        if(!isset($this->data->statusSuccess->report->payment)){
-            $canceled = false;
+        if (!isset($this->data->statusSuccess->report->payment)) {
+            return false;
         }
-        elseif(is_array($this->data->statusSuccess->report->payment)) {
-            foreach($this->data->statusSuccess->report->payment as $payment){
-                if($payment->authorization->status == 'CANCELED'){
-                    $canceled = true;
-                }
-                else{
-                    $canceled = false;
-                }
-            }
+
+        $payment = $this->getMostRecentPayment();
+
+        if (\is_array($payment)) {
+            $payment = $payment[0];
         }
-        else{
-            $payment = $this->data->statusSuccess->report->payment;
-            if($payment->authorization->status == 'CANCELED'){
-                $canceled = true;
-            }
-            else{
-                $canceled = false;
-            }
-        }
-        return $canceled;
+
+
+        return $payment->authorization->status === 'CANCELED';
     }
-    
+
     public function isCaptured()
     {
-        if($this->data->statusSuccess->report->approximateTotals->totalRegistered == $this->data->statusSuccess->report->approximateTotals->totalCaptured) {
-            return true;
+        $approximateTotals = $this->data->statusSuccess->report->approximateTotals;
+
+        $totalRegistered = $approximateTotals->totalRegistered;
+        $totalCaptured = $approximateTotals->totalCaptured;
+
+        return $totalRegistered === $totalCaptured;
+    }
+
+    /**
+     * Docdata returns an array of payments when you do several attempts. It returns 1 object if there was 1 attempt.
+     * Get the most recent payment, as all previous ones should be unsuccessful.
+     * When there is a successful attempt the user is returned to payment service.
+     * The only issue could be bank transfers. No clue how that is handled.
+     *
+     * @return \stdClass payment information
+     */
+    protected function getMostRecentPayment()
+    {
+        $oneOrSeveralPayments = $this->data->statusSuccess->report->payment;
+
+        if (is_array($oneOrSeveralPayments)) {
+            return end($oneOrSeveralPayments);
         }
-        return false;
+
+        return $oneOrSeveralPayments;
     }
 
 }
