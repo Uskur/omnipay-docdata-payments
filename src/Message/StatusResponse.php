@@ -84,7 +84,7 @@ class StatusResponse extends AbstractResponse
         $approximateTotals = $this->data->statusSuccess->report->approximateTotals;
 
         $totalRegistered = $approximateTotals->totalRegistered;
-        $totalCaptured = $approximateTotals->totalCaptured;
+        $totalCaptured = $approximateTotals->totalCaptured - $approximateTotals->totalRefunded - $approximateTotals->totalChargedback - $approximateTotals->totalReversed;
 
         return $totalRegistered === $totalCaptured;
     }
