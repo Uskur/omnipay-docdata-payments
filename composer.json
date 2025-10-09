@@ -24,7 +24,8 @@
         "psr-4": { "Omnipay\\DocdataPayments\\" : "src/" }
     },
     "require": {
-        "omnipay/common": "~3.0"
+        "omnipay/common": "~3.0",
+        "ext-soap": "*"
     },
     "require-dev": {
         "omnipay/tests": "~3.0"
