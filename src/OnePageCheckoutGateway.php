@@ -2,9 +2,9 @@
 
 namespace Omnipay\DocdataPayments;
 
-use Guzzle\Http\ClientInterface;
 use Omnipay\DocdataPayments\Message\SoapAbstractRequest;
 use Omnipay\Common\AbstractGateway;
+use Omnipay\Common\Http\ClientInterface;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
 /**

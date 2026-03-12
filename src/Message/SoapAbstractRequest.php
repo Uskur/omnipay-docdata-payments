@@ -2,7 +2,7 @@
 
 namespace Omnipay\DocdataPayments\Message;
 
-use Guzzle\Http\ClientInterface;
+use Omnipay\Common\Http\ClientInterface;
 use Omnipay\Common\Message\AbstractRequest as OmnipayAbstractRequest;
 use SoapClient;
 use SoapFault;
