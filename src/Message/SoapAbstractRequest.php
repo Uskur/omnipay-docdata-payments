@@ -357,19 +357,27 @@ abstract class SoapAbstractRequest extends OmnipayAbstractRequest
         // set the internal character encoding to avoid random conversions
         // throw SoapFault exceptions when there is an error
         $soap_options = array(
-            'compression'           => SOAP_COMPRESSION_ACCEPT |
-                SOAP_COMPRESSION_GZIP | SOAP_COMPRESSION_DEFLATE,
             'encoding'              => 'utf-8',
             'exceptions'            => true,
             'connection_timeout'    => $this->timeout,
             'stream_context'        => $context,
         );
 
+        if (
+            defined('SOAP_COMPRESSION_ACCEPT')
+            && defined('SOAP_COMPRESSION_GZIP')
+            && defined('SOAP_COMPRESSION_DEFLATE')
+        ) {
+            $soap_options['compression'] = \SOAP_COMPRESSION_ACCEPT
+                | \SOAP_COMPRESSION_GZIP
+                | \SOAP_COMPRESSION_DEFLATE;
+        }
+
         // if we're in test mode, don't cache the wsdl
         if ($this->getTestMode()) {
-            $soap_options['cache_wsdl'] = WSDL_CACHE_NONE;
+            $soap_options['cache_wsdl'] = \WSDL_CACHE_NONE;
         } else {
-            $soap_options['cache_wsdl'] = WSDL_CACHE_BOTH;
+            $soap_options['cache_wsdl'] = \WSDL_CACHE_BOTH;
         }
 
         $this->soapClient = new SoapClient($this->getEndpoint(), $soap_options);
