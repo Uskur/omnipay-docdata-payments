@@ -24,6 +24,21 @@ class OnePageCheckoutGateway extends WebdirectGateway
     }
 
     /**
+     * Create a purchase request.
+     *
+     * One-page checkout creates the payment order first and redirects the
+     * shopper to Docdata's hosted payment menu.
+     *
+     * @param array $parameters Data to be sent to Docdata
+     *
+     * @return RequestInterface
+     */
+    public function purchase(array $parameters = array()): RequestInterface
+    {
+        return $this->createRequest(CreateRequest::class, $parameters);
+    }
+
+    /**
      * Create an authorize request
      *
      * @param array $parameters Data to be sent to Docdata
