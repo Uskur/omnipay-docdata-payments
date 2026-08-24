@@ -6,6 +6,7 @@ use Omnipay\Common\Http\ClientInterface;
 use Omnipay\Common\Message\RequestInterface;
 use Omnipay\DocdataPayments\Message\CreateRequest;
 use Omnipay\Common\AbstractGateway;
+use Omnipay\DocdataPayments\Message\ExtendedStatusRequest;
 use Omnipay\DocdataPayments\Message\OnePageCompleteAuthorizeRequest;
 
 /**
@@ -60,5 +61,17 @@ class OnePageCheckoutGateway extends WebdirectGateway
     public function completeAuthorize(array $parameters = array())
     {
         return $this->createRequest(OnePageCompleteAuthorizeRequest::class, $parameters);
+    }
+
+    /**
+     * Get the extended status of a transaction.
+     *
+     * @param array $parameters Data to be sent to Docdata
+     *
+     * @return RequestInterface
+     */
+    public function extendedStatus(array $parameters = array()): RequestInterface
+    {
+        return $this->createRequest(ExtendedStatusRequest::class, $parameters);
     }
 }
